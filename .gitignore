@@ -1,0 +1,5 @@
+config*.json
+Completed/
+service_account.json
+processed_files.json
+*.log
