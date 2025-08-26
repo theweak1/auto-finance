@@ -93,6 +93,7 @@ def categorize_transaction(name, category, rules, amount=None):
     """
     name = name.strip().lower()
     category = category.strip().lower()
+    amnt = amount
 
     for rule in rules:
         match = rule.get("match", {})
@@ -101,13 +102,23 @@ def categorize_transaction(name, category, rules, amount=None):
         # Normalize rule match values
         name_subs = [sub.strip().lower() for sub in match.get("name_contains", [])]
         cat_equals = [c.strip().lower() for c in match.get("category_equals", [])]
-        amt_equals = match.get("amount_equals")
+        amt_equals = match.get("amount_equals",[])
 
         # Compute individual matches
         name_match = any(sub in name for sub in name_subs) if name_subs else None
         cat_match = category in cat_equals if cat_equals else None
-        amt_match = amt_equals == amount if amt_equals is not None else None
 
+        if amt_equals:
+            if amnt is None:
+                amt_match = False
+            else:
+                try:
+                    amt_match = any(float(a) == float(amnt) for a in amt_equals)
+                except (typeError, ValueError):
+                    amt_match = False
+        else:
+            amt_match = None
+       
         if match_any:
             if any(m is True for m in [name_match, cat_match, amt_match]):
                 return rule["category"]
@@ -155,7 +166,7 @@ def is_valid_file(filename):
     """
     Check if the file follows the expected naming format (e.g., BANK_january.csv).
     """
-    if not filename.startswith("BANK_"):
+    if not filename.startswith("BP_"):
         return False, None
     try:
         month_name = filename.split("_")[1].split(".")[0].lower()
